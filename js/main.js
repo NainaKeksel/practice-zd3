@@ -1,5 +1,30 @@
+Vue.component('card', {
+    props: ['card', 'columnIndex'],
+    template: `
+    <div class="card" :class="{ completed: card.status === 'completed', overdue: card.status === 'overdue' }">
+            <h3>{{ card.title }}</h3>
+            <p>{{ card.description }}</p>
+            <p>Дата создания: {{ card.createdAt }}</p>
+            <p>Последнее редактирование: {{ card.updatedAt }}</p>
+            <p>Дедлайн: {{ card.deadline }}</p>
+            <button @click="editCard">Редактировать</button>
+        </div>
+    `,
+    methods: {
+        editCard() {
+            this.$emit('edit-card');
+        },
+        deleteCard() {
+            this.$emit('delete-card');
+        },
+        moveCard(toColumnIndex) {
+            this.$emit('move-card', toColumnIndex);
+        },
+    }
+});
+
 Vue.component('column', {
-    props: ['column', 'column-index'],
+    props: ['column', 'columnIndex'],
     template: `
                 <div class="column">
                     <h2>{{ column.title }}</h2>
@@ -75,6 +100,22 @@ new Vue({
                 card.reasonForMove = reason;
             }
             this.columns[toColumnIndex].cards.push(card);
-        }
+    
+        },
+        editCard(columnIndex, cardIndex) {
+            const card = this.columns[columnIndex].cards[cardIndex];
+            const newTitle = prompt('Введите новый заголовок:', card.title);
+            const newDescription = prompt('Введите новое описание:', card.description);
+            const newDeadline = prompt('Введите новый дедлайн:', card.deadline);
+            if (newTitle && newDescription && newDeadline) {
+                card.title = newTitle;
+                card.description = newDescription;
+                card.deadline = newDeadline;
+                card.updatedAt = new Date().toLocaleString();
+            }
+        },
+        deleteCard(columnIndex, cardIndex) {
+            this.columns[columnIndex].cards.splice(cardIndex, 1);
+        },
     }
 });
