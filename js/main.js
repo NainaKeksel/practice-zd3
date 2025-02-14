@@ -107,6 +107,7 @@ new Vue({
     methods: {
         addCard(columnIndex, newCard) {
             this.columns[columnIndex].cards.push(newCard);
+            this.saveToLocalStorage();
         },
         moveCard(fromColumnIndex, toColumnIndex, cardIndex, reason) {
             const card = this.columns[fromColumnIndex].cards.splice(cardIndex, 1)[0];
@@ -119,7 +120,7 @@ new Vue({
                 card.reasonForMove = reason;
             }
             this.columns[toColumnIndex].cards.push(card);
-    
+            this.saveToLocalStorage();
         },
         editCard(columnIndex, cardIndex) {
             const card = this.columns[columnIndex].cards[cardIndex];
@@ -131,10 +132,24 @@ new Vue({
                 card.description = newDescription;
                 card.deadline = newDeadline;
                 card.updatedAt = new Date().toLocaleString();
+                this.saveToLocalStorage();
             }
         },
         deleteCard(columnIndex, cardIndex) {
             this.columns[columnIndex].cards.splice(cardIndex, 1);
+            this.saveToLocalStorage();
         },
+        saveToLocalStorage() {
+            localStorage.setItem('kanbanBoard', JSON.stringify(this.columns));
+        },
+        loadFromLocalStorage() {
+            const data = localStorage.getItem('kanbanBoard');
+            if (data) {
+                this.columns = JSON.parse(data);
+            }
+        },
+    },
+    created() {
+        this.loadFromLocalStorage();
     }
 });
