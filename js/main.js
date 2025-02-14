@@ -7,7 +7,11 @@ Vue.component('card', {
             <p>Дата создания: {{ card.createdAt }}</p>
             <p>Последнее редактирование: {{ card.updatedAt }}</p>
             <p>Дедлайн: {{ card.deadline }}</p>
-            <button @click="editCard">Редактировать</button>
+            <button class="but" @click="editCard">Редактировать</button>
+            <button class="but" v-if="columnIndex === 0" @click="moveCard(1)">В работу</button>
+            <button class="but" v-if="columnIndex === 1" @click="moveCard(2)">Тестирование</button>
+            <button class="but" v-if="columnIndex === 2" @click="moveCard(3)">Завершить работу</button>
+            <button class="but" v-if="columnIndex === 2" @click="returnToWork">Возобновить работу</button>
         </div>
     `,
     methods: {
@@ -20,21 +24,36 @@ Vue.component('card', {
         moveCard(toColumnIndex) {
             this.$emit('move-card', toColumnIndex);
         },
+        returnToWork() {
+            const reason = prompt('Укажите причину возврата в работу:');
+            if (reason) {
+                this.$emit('move-card', 1, reason);
+            }
+        }
     }
 });
 
 Vue.component('column', {
     props: ['column', 'columnIndex'],
     template: `
-                <div class="column">
-                    <h2>{{ column.title }}</h2>
-                    <div v-if="columnIndex === 0">
-                        <input class="form" v-model="newCardTitle" placeholder="Заголовок">
-                        <textarea class="form" v-model="newCardDescription" placeholder="Описание задачи"></textarea>
-                        <input class="data" type="date" v-model="newCardDeadline">
-                        <button class="but" @click="addCard">Добавить карточку</button>
-                    </div>
-                </div>
+        <div class="column">
+        <h2>{{ column.title }}</h2>
+        <div v-if="columnIndex === 0">
+            <input class="form" type="text" v-model="newCardTitle" placeholder="Заголовок">
+            <textarea class="form" v-model="newCardDescription" placeholder="Описание задачи"></textarea>
+            <input class="data" type="date" v-model="newCardDeadline">
+            <button class="but" @click="addCard">Добавить</button>
+        </div>
+        <card 
+        v-for="(card, cardIndex) in column.cards" 
+        :key="cardIndex" 
+        :card="card" 
+        :column-index="columnIndex" 
+            @edit-card="editCard(cardIndex)" 
+            @delete-card="deleteCard(cardIndex)" 
+            @move-card="moveCard(cardIndex, $event)">       
+        </card>
+    </div>
             `,
     data() {
         return {
@@ -94,7 +113,7 @@ new Vue({
             if (toColumnIndex === 3) {
                 const deadline = new Date(card.deadline);
                 const now = new Date();
-                card.status = deadline < now ? 'просрочено' : 'выполнено';
+                card.status = deadline < now ? 'overdue' : 'completed';
             }
             if (reason) {
                 card.reasonForMove = reason;
