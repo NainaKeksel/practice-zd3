@@ -14,7 +14,7 @@ body{
     border-radius: 10px;
     box-shadow: 6px 9px 9px 0 rgba(0, 0, 0, 0.54);
 }
-.note {
+.card {
     border: 1px solid gray;
     background-color: white;
     border-radius: 15px;
@@ -37,12 +37,16 @@ h2 {
     font-family: sans-serif;
     text-align: center;
 }
+h3 {
+    font-family: sans-serif;
+    text-align: center;
+}
 ul {
     padding: 0;
 }
 .but {
     background-color: rgb(223,186,230);
-    box-shadow: 14px 9px 9px 0 rgba(0, 0, 0, 0.54);
+    box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.54);
     margin-top: 20px;
     padding: 10px;
     font-family: sans-serif;
@@ -72,5 +76,21 @@ form {
     border-radius: 5px;
     margin-top: 15px;
     padding: 10px;
-    box-shadow: 6px 9px 9px 0 rgba(0, 0, 0, 0.54);
+    box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.54);
+}
+.board {
+    display: flex;
+    gap: 20px;
+}
+.overdue {
+    color: red;
+}
+.completed {
+    color: green;
+}
+.add-card-form {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: rgba(253,190,207, .5);
+    border-radius: 8px;
 }

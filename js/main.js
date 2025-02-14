@@ -1,168 +1,147 @@
-Vue.component('card', {
-    props: ['card', 'columnIndex'],
-    template: `
-    <div class="card" :class="{ completed: card.status === 'completed', overdue: card.status === 'overdue' }">
-            <h3>{{ card.title }}</h3>
-            <p>{{ card.description }}</p>
-            <p>Дата создания: {{ card.createdAt }}</p>
-            <p>Последнее редактирование: {{ card.updatedAt }}</p>
-            <p>Дедлайн: {{ card.deadline }}</p>
-            <p v-if="card.reasonForMove">Причина возврата: {{ card.reasonForMove }}</p>
-            <p>Debug: {{ card }}</p>
-            <button class="but" @click="editCard">Редактировать</button>
-            <button class="but" v-if="columnIndex === 0" @click="moveCard(1)">В работу</button>
-            <button class="but" v-if="columnIndex === 1" @click="moveCard(2)">Тестирование</button>
-            <button class="but" v-if="columnIndex === 2" @click="moveCard(3)">Завершить работу</button>
-            <button class="but" v-if="columnIndex === 2" @click="returnToWork">Возобновить работу</button>
-        </div>
-    `,
-    methods: {
-        editCard() {
-            this.$emit('edit-card');
-        },
-        deleteCard() {
-            this.$emit('delete-card');
-        },
-        moveCard(toColumnIndex) {
-            this.$emit('move-card', toColumnIndex);
-        },
-        returnToWork() {
-            const reason = prompt('Укажите причину возврата в работу:');
-            if (reason) {
-                this.$emit('move-card', 1, reason);
-            }
-            else {
-                console.log('Причина возврата не указана');
+document.addEventListener('DOMContentLoaded', function () {
+    Vue.component('card', {
+        props: ['card', 'columnIndex'],
+        template: `
+            <div class="card">
+                <h3>{{ card.title }}</h3>
+                <p>{{ card.description }}</p>
+                <p>Создано: {{ card.createdAt }}</p>
+                <p v-if="card.lastEdited">Изменено: {{ card.lastEdited }}</p>
+                <p>Дедлайн: {{ card.deadline }}</p>
+                <p v-if="card.isOverdue" class="overdue">Просрочено</p>
+                <p v-if="card.isCompleted" class="completed">Выполнено в срок</p>
+                <p v-if="card.returnReason">Причина возврата: {{ card.returnReason }}</p>
+                <div>
+                    <button class="but" @click="$emit('edit-card')">Редактировать</button>
+                    <button class="but" @click="$emit('delete-card')">Удалить</button>
+                    <button class="but" v-if="columnIndex === 0" @click="move(1)">В работу</button>
+                    <button class="but" v-if="columnIndex === 1" @click="move(2)">Тестирование</button>
+                    <button class="but" v-if="columnIndex === 2" @click="returnToWork">Вернуть</button>
+                    <button class="but" v-if="columnIndex === 2" @click="move(3)">Завершить</button>
+                </div>
+            </div>
+        `,
+        methods: {
+            move(toColumn) {
+                this.$emit('move-card', {
+                    cardId: this.card.id,
+                    from: this.columnIndex,
+                    to: toColumn
+                });
+            },
+            returnToWork() {
+                const reason = prompt('Укажите причину возврата в работу:');
+                if (reason) {
+                    this.$emit('move-card', {
+                        cardId: this.card.id,
+                        from: this.columnIndex,
+                        to: 1,
+                        reason: reason
+                    });
+                }
             }
         }
-    }
 });
 
 Vue.component('column', {
     props: ['column', 'columnIndex'],
     template: `
         <div class="column">
-        <h2>{{ column.title }}</h2>
-        <div v-if="columnIndex === 0">
-            <input class="form" type="text" v-model="newCardTitle" placeholder="Заголовок">
-            <textarea class="form" v-model="newCardDescription" placeholder="Описание задачи"></textarea>
-            <input class="data" type="date" v-model="newCardDeadline">
-            <button class="but" @click="addCard">Добавить</button>
+            <h2>{{ column.title }}</h2>
+            <card 
+                v-for="card in column.cards" 
+                :key="card.id" 
+                :card="card" 
+                :column-index="columnIndex"
+                @edit-card="$emit('edit-card', card)"
+                @delete-card="$emit('delete-card', card.id)"
+                @move-card="$emit('move-card', $event)"
+            />
         </div>
-        <card 
-        v-for="(card, cardIndex) in column.cards" 
-        :key="cardIndex" 
-        :card="card" 
-        :column-index="columnIndex" 
-            @edit-card="editCard(cardIndex)" 
-            @delete-card="deleteCard(cardIndex)" 
-            @move-card="moveCard(cardIndex, $event)">       
-        </card>
-    </div>
-            `,
-    data() {
-        return {
-            newCardTitle: '',
-            newCardDescription: '',
-            newCardDeadline: '',
-            reasonForMove: ''
-        };
-    },
-    methods: {
-        addCard() {
-            if (this.newCardTitle.trim() === '' || this.newCardDescription.trim() === '' || this.newCardDeadline === '') {
-                alert('Заполните все поля');
-                return;
-            }
-            const newCard = {
-                title: this.newCardTitle,
-                description: this.newCardDescription,
-                createdAt: new Date().toLocaleString(),
-                updatedAt: new Date().toLocaleString(),
-                deadline: this.newCardDeadline,
-                status: 'planned',
-                reasonForMove: null,
-            };
-            this.$emit('add-card', this.columnIndex, newCard);
-            this.newCardTitle = '';
-            this.newCardDescription = '';
-            this.newCardDeadline = '';
-        },
-        editCard(cardIndex) {
-            this.$emit('edit-card', this.columnIndex, cardIndex);
-        },
-        deleteCard(cardIndex) {
-            this.$emit('delete-card', this.columnIndex, cardIndex);
-        },
-        moveCard(cardIndex, toColumnIndex) {
-            this.$emit('move-card', this.columnIndex, toColumnIndex, cardIndex);
-        },
-    }
+    `
 });
+Vue.component('board', {
+    props: ['columns'],
+    template: `
+        <div class="board">
+            <column 
+                v-for="(column, index) in columns" 
+                :key="index" 
+                :column="column" 
+                :column-index="index"
+                @edit-card="$emit('edit-card', $event)"
+                @delete-card="$emit('delete-card', $event)"
+                @move-card="$emit('move-card', $event)"
+            />
+        </div>
+    `
+});
+
 new Vue({
     el: '#app',
-    data() {
-        return {
+    data: () => ({
             columns: [
                 { title: 'Запланированные задачи', cards: [] },
                 { title: 'Задачи в работе', cards: [] },
                 { title: 'Тестирование', cards: [] },
                 { title: 'Выполненные задачи', cards: [] }
-            ]
-        };
-    },
-    methods: {
-        addCard(columnIndex, newCard) {
-            this.columns[columnIndex].cards.push(newCard);
-            this.saveToLocalStorage();
-        },
-        moveCard(fromColumnIndex, toColumnIndex, cardIndex, reason) {
-            const card = this.columns[fromColumnIndex].cards.splice(cardIndex, 1)[0];
-            if (toColumnIndex === 3) {
-                const deadline = new Date(card.deadline);
-                const now = new Date();
-                card.status = deadline < now ? 'overdue' : 'completed';
+             ],
+            formData: { title: '', description: '', deadline: '' },
+            editingCard: null
+        }),
+        methods: {
+            addCard() {
+                this.formData = { title: '', description: '', deadline: '' };
+                this.editingCard = null;
+            },
+            saveCard() {
+                if (!this.formData.title || !this.formData.deadline) return;
+                if (this.editingCard) {
+                    Object.assign(this.editingCard, this.formData, {
+                        lastEdited: new Date().toLocaleString()
+                    });
+                } else {
+                    this.columns[0].cards.push({
+                        id: Date.now(),
+                        ...this.formData,
+                        createdAt: new Date().toLocaleString(),
+                        lastEdited: null,
+                        isOverdue: false,
+                        isCompleted: false,
+                        returnReason: null
+                    });
+                }
+                this.formData = { title: '', description: '', deadline: '' };
+            },
+            editCard(card) {
+                this.formData = { ...card };
+                this.editingCard = card;
+            },
+            deleteCard(cardId) {
+                this.columns.forEach(col => col.cards = col.cards.filter(c => c.id !== cardId));
+            },
+            moveCard({ cardId, from, to, reason }) {
+                const card = this.findCard(cardId);
+                if (!card) return;
+                this.columns[from].cards = this.columns[from].cards.filter(c => c.id !== cardId);
+                if (to === 3) {
+                    const deadline = new Date(card.deadline);
+                    card.isOverdue = new Date() > deadline;
+                    card.isCompleted = !card.isOverdue;
+                    card.returnReason = null;
+                }
+                if (reason) {
+                    card.returnReason = reason;
+                }
+                this.columns[to].cards.push(card);
+            },
+            findCard(cardId) {
+                for (const col of this.columns) {
+                    const card = col.cards.find(c => c.id === cardId);
+                    if (card) return card;
+                }
+                return null;
             }
-            if (reason) {
-                card.reasonForMove = reason;
-                console.log('Причина возврата сохранена:', reason);
-            } else {
-                console.log('Причина возврата не передана');
-            }
-            this.columns[toColumnIndex].cards.push(card);
-            this.saveToLocalStorage();
-        },
-        editCard(columnIndex, cardIndex) {
-            const card = this.columns[columnIndex].cards[cardIndex];
-            const newTitle = prompt('Введите новый заголовок:', card.title);
-            const newDescription = prompt('Введите новое описание:', card.description);
-            const newDeadline = prompt('Введите новый дедлайн:', card.deadline);
-            if (newTitle && newDescription && newDeadline) {
-                card.title = newTitle;
-                card.description = newDescription;
-                card.deadline = newDeadline;
-                card.updatedAt = new Date().toLocaleString();
-                this.saveToLocalStorage();
-            }
-        },
-        deleteCard(columnIndex, cardIndex) {
-            this.columns[columnIndex].cards.splice(cardIndex, 1);
-            this.saveToLocalStorage();
-        },
-        saveToLocalStorage() {
-            localStorage.setItem('kanbanBoard', JSON.stringify(this.columns));
-        },
-        loadFromLocalStorage() {
-            const data = localStorage.getItem('kanbanBoard');
-            if (data) {
-                this.columns = JSON.parse(data);
-                console.log('Данные загружены из localStorage:', this.columns);
-            } else {
-                console.log('Данные в localStorage отсутствуют');
-            }
-        },
-    },
-    created() {
-        this.loadFromLocalStorage();
-    }
+        }
+    });
 });

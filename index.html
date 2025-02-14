@@ -12,7 +12,16 @@
 </head>
 <body>
 <div id="app">
-    <column v-for="(column, index) in columns" :key="index" :column="column" :column-index="index" @add-card="addCard" @edit-card="editCard" @delete-card="deleteCard" @move-card="moveCard"></column>
+    <board :columns="columns" @add-card="addCard" @edit-card="editCard" @delete-card="deleteCard" @move-card="moveCard"></board>
+    <div class="add-card-form">
+        <h3>Новая карточка</h3>
+        <form @submit.prevent="saveCard">
+            <input class="form" v-model="formData.title" placeholder="Заголовок" required>
+            <textarea class="form"  v-model="formData.description" placeholder="Описание"></textarea>
+            <input class="data" type="date" v-model="formData.deadline" required>
+            <button class="but" type="submit">Создать</button>
+        </form>
+    </div>
 </div>
 </body>
 </html>
