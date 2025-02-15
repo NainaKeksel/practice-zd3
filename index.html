@@ -8,15 +8,15 @@
     <link rel="stylesheet" href="css/style.css">
     <script defer src="js/vue.min.js"></script>
     <script defer src="js/main.js"></script>
-    <title>Kanban</title>
+    <title>Задачи</title>
 </head>
 <body>
 <div id="app">
     <board :columns="columns" @add-card="addCard" @edit-card="editCard" @delete-card="deleteCard" @move-card="moveCard"></board>
     <div class="add-card-form">
-        <h3>Новая карточка</h3>
+        <h3>Новая задача</h3>
         <form @submit.prevent="saveCard">
-            <input class="form" v-model="formData.title" placeholder="Заголовок" required>
+            <input class="form" v-model="formData.title" placeholder="Название" required>
             <textarea class="form"  v-model="formData.description" placeholder="Описание"></textarea>
             <input class="data" type="date" v-model="formData.deadline" required>
             <button class="but" type="submit">Создать</button>
